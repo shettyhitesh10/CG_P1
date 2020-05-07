@@ -11,6 +11,8 @@ int pntX1, pntY1, r;
 int start_x = 0;
 int start_y = 0;
 
+int started = 0;//flag that sigifies the start of shading (used in mouse and myDisplay)
+
 struct Point
 {
     GLint x;
@@ -39,7 +41,8 @@ struct Color
 };
 
 Point startPoint;
-Color oldColor;
+Color oldColor = { 1.0f, 1.0f, 1.0f };//default values
+Color newColor = { 1.0f, 0.0f, 0.0f };
 
 vector<ScanPoint> upAgenda;
 vector<ScanPoint> downAgenda;
@@ -393,7 +396,7 @@ void shade(Color newColor)
         shadeVertically(verticalDir, newColor);
     }
 }
-
+/*** Mid-point algorithm ***/
 void plot_circle(int x, int y,int cx,int cy)
 {
    
@@ -406,7 +409,7 @@ void plot_circle(int x, int y,int cx,int cy)
     plot(cx + y, cy - x);
     plot(cx - y, cy - x);
 }
-/*! Mid-point algorithm*/
+
 void midPointCircleAlgo(int cx,int cy,int r)
 {
     int x = 0;
@@ -434,9 +437,27 @@ void midPointCircleAlgo(int cx,int cy,int r)
         plot_circle(x, y,cx,cy);
     }
 }
+//--------------------
 void myDisplay(void)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    int colorPalette = 20;
+    //glClear(GL_COLOR_BUFFER_BIT);  //hs uncomment to getone color at a time only
+
+    //************************color tool(right side)**********************
+    double clr = 0;//decides the colorpalette by helping get 3 bit binnary numbers
+    while (colorPalette <= 420&&clr<=3) {
+        
+        //cout << (clr > 1.5)<<int(clr)%2 << int(clr * 2) % 2 << endl;// produces 000 001 010 .... 110 
+        glColor3f(clr>1.5, int(clr)%2, int(clr*2)%2);
+        glPointSize(40.0);
+        glBegin(GL_POINTS);
+        glVertex2i(620, 480-colorPalette);
+        glEnd();
+        colorPalette += 40;
+        clr += 0.5;
+    }
+    //-------------------------------------------------------------------
+    
     glColor3f(0.0, 0.0, 0.0);
     glPointSize(1.0);
 
@@ -444,14 +465,12 @@ void myDisplay(void)
     r = r ;
     midPointCircleAlgo(-5,-r,r/3);
     midPointCircleAlgo(0, 0, r/3);
-    Color newColor = { 1.0f, 0.0f, 0.0f };
-    oldColor = { 1.0f, 1.0f, 1.0f };
-    cout << start_x;
-    if (start_x != 0) { 
-        cout << endl << "works"<<start_x<<start_y;//hs
+    
+    if (started == 1) { //checks if atleast 1 ckick has been made
         startPoint.x = start_x;
         startPoint.y = start_y;
-        shade(newColor); 
+        shade(newColor);
+
     }
     //floodFill(200, 200, oldColor, newColor);
     glFlush();
@@ -459,16 +478,39 @@ void myDisplay(void)
 
 void mouse(int button, int state, int mousex, int mousey)
 {
-    //hs cout << "entry succesful"<<endl;
+    
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
         start_x = mousex;
         start_y = 480 - mousey;
-        //hs cout <<start_x<<start_y<<"start_* updated"<<endl;
+
+        //cout<< newColor.r << newColor.g << newColor.b << " ";
+        //cout << oldColor.r << oldColor.g << oldColor.b << " "<<endl;
+
+        Color currColor = getPixelColor(start_x, start_y);//color at the current click point
+
+        if (start_x > 600 /*&&start_y>240*/) {
+            if ((currColor.r == oldColor.r && currColor.g == oldColor.g && currColor.b == oldColor.b)) {
+                oldColor = newColor;
+            }
+            newColor = currColor;
+            //cout << " +" <<newColor.r<<newColor.g<<newColor.b<<endl;
+            return;
+        }
+ 
+        if (!(newColor.r == currColor.r && newColor.g == currColor.g && newColor.b == currColor.b)) {
+            oldColor = currColor;
+        }
+
+        //cout <<"8 "<< newColor.r << newColor.g << newColor.b << " ";
+        //cout << oldColor.r << oldColor.g << oldColor.b << endl;
+
+        started = 1;
+
     }
     else
     {
-        return;
+        return;//so as to not react to glut_up
     }
     glutPostRedisplay();
 }
@@ -485,12 +527,6 @@ int main(int argc, char** argv)
     cout << "\nEnter radius : ";
     cin >> r;
     
-    /*
-    cout << "X-coordinate of start point wrt centre of cirle   : ";
-    cin >> start_x;
-    cout << "\nY-coordinate of start point wrt centre of cirle   : ";
-    cin >> start_y;*/
-
     
 
     glutInit(&argc, argv);
