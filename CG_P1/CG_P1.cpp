@@ -7,6 +7,10 @@
 #include <GL/glut.h>
 using namespace std;
 int pntX1, pntY1, r;
+
+int start_x = 0;
+int start_y = 0;
+
 struct Point
 {
     GLint x;
@@ -437,14 +441,36 @@ void myDisplay(void)
     glPointSize(1.0);
 
     midPointCircleAlgo(0,0,r);
-    r = r / 3;
-    midPointCircleAlgo(-5,-r*3,r);
-    midPointCircleAlgo(0, 0, r);
+    r = r ;
+    midPointCircleAlgo(-5,-r,r/3);
+    midPointCircleAlgo(0, 0, r/3);
     Color newColor = { 1.0f, 0.0f, 0.0f };
     oldColor = { 1.0f, 1.0f, 1.0f };
-    shade(newColor);
+    cout << start_x;
+    if (start_x != 0) { 
+        cout << endl << "works"<<start_x<<start_y;//hs
+        startPoint.x = start_x;
+        startPoint.y = start_y;
+        shade(newColor); 
+    }
     //floodFill(200, 200, oldColor, newColor);
     glFlush();
+}
+
+void mouse(int button, int state, int mousex, int mousey)
+{
+    //hs cout << "entry succesful"<<endl;
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+    {
+        start_x = mousex;
+        start_y = 480 - mousey;
+        //hs cout <<start_x<<start_y<<"start_* updated"<<endl;
+    }
+    else
+    {
+        return;
+    }
+    glutPostRedisplay();
 }
 
 int main(int argc, char** argv)
@@ -459,21 +485,21 @@ int main(int argc, char** argv)
     cout << "\nEnter radius : ";
     cin >> r;
     
-    int start_x = 0;
-    int start_y = 0;
+    /*
     cout << "X-coordinate of start point wrt centre of cirle   : ";
     cin >> start_x;
     cout << "\nY-coordinate of start point wrt centre of cirle   : ";
-    cin >> start_y;
-    startPoint.x = pntX1+start_x;
-    startPoint.y = pntY1+start_y;
+    cin >> start_y;*/
+
+    
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(640, 480);
-    glutInitWindowPosition(100, 150);
-    glutCreateWindow("Line Drawing Alogrithms");
+    glutInitWindowPosition(0, 0);
+    glutCreateWindow("ColourBook Project");
     glutDisplayFunc(myDisplay);
+    glutMouseFunc(mouse);
     myInit();
     glutMainLoop();
     return 0;
