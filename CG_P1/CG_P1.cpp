@@ -11,7 +11,7 @@ int pntX1, pntY1, r;
 int start_x = 0;
 int start_y = 0;
 
-int started = 0;//flag that sigifies the start of shading (used in mouse and myDisplay)
+int started = 0;//sigifies the start of shading (used in mouse and myDisplay)
 
 struct Point
 {
@@ -438,12 +438,17 @@ void midPointCircleAlgo(int cx,int cy,int r)
     }
 }
 //--------------------
+int prev_x = 0;
+int prev_y = 0;
+int coloring = 0;//0:drawing,1:coloring
 void myDisplay(void)
 {
-    int colorPalette = 20;
+       
     //glClear(GL_COLOR_BUFFER_BIT);  //hs uncomment to getone color at a time only
 
     //************************color tool(right side)**********************
+
+    int colorPalette = 20;
     double clr = 0;//decides the colorpalette by helping get 3 bit binnary numbers
     while (colorPalette <= 420&&clr<=3) {
         
@@ -458,6 +463,22 @@ void myDisplay(void)
     }
     //-------------------------------------------------------------------
     
+    //***drawing***
+    glColor3f(0.0, 0.0, 0.0);
+    if (coloring < 1) {
+        glLineWidth(1.0);
+
+        glBegin(GL_LINES);
+        glVertex2i(prev_x, prev_y);
+        glVertex2i(start_x, start_y);
+        glEnd();
+
+        prev_x = start_x;
+        prev_y = start_y;
+        glFlush();
+        return;
+    }
+    //---------
     glColor3f(0.0, 0.0, 0.0);
     glPointSize(1.0);
 
@@ -476,9 +497,37 @@ void myDisplay(void)
     glFlush();
 }
 
-void mouse(int button, int state, int mousex, int mousey)
+void mouse_dynamic(int mousex, int mousey)
 {
     
+    
+    //get imput for drawing
+    if (coloring == 0) {
+        start_x = mousex;
+        start_y = 480 - mousey;
+    }
+
+    /*if (coloring == 0) {
+        prev_x = start_x;
+        prev_y = start_y;
+        coloring = 1;
+    }*/
+    glutPostRedisplay();
+}
+
+void mouse(int button, int state, int mousex, int mousey)
+{
+    if (mousex > 600)
+        coloring = 1;//hs if you touch the color palette , stop drawing start coloring
+
+    if (coloring ==0 &&(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN))
+    {
+        start_x = mousex;
+        start_y = 480 - mousey;
+        prev_x = start_x;
+        prev_y = start_y;
+        return;
+    }
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
         start_x = mousex;
@@ -517,7 +566,7 @@ void mouse(int button, int state, int mousex, int mousey)
 
 int main(int argc, char** argv)
 {
-    cout << "Enter the coordinates of the center:\n\n"
+    /*cout << "Enter the coordinates of the center:\n\n"
         << endl;
 
     cout << "X-coordinate   : ";
@@ -525,7 +574,7 @@ int main(int argc, char** argv)
     cout << "\nY-coordinate : ";
     cin >> pntY1;
     cout << "\nEnter radius : ";
-    cin >> r;
+    cin >> r;*/
     
     
 
@@ -536,6 +585,7 @@ int main(int argc, char** argv)
     glutCreateWindow("ColourBook Project");
     glutDisplayFunc(myDisplay);
     glutMouseFunc(mouse);
+    glutMotionFunc(mouse_dynamic);
     myInit();
     glutMainLoop();
     return 0;
