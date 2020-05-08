@@ -114,7 +114,7 @@ void initializeAgenda()
     int x0 = x + 1;
     x = startPoint.x;
     iter = getPixelColor(x, y);
-    while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b)
+    while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b && x < 599)//599 for border
     {
         x++;
         iter = getPixelColor(x, y);
@@ -127,7 +127,7 @@ void initializeAgenda()
     downInitial.y = y;
     x = x0;
     iter = getPixelColor(x, y);
-    while (x <= x1 && (iter.r != oldColor.r || iter.g != oldColor.g || iter.b != oldColor.b))
+    while (x <= x1 && (iter.r != oldColor.r || iter.g != oldColor.g || iter.b != oldColor.b) && x < 599)//599 for border
     {
         x++;
         iter = getPixelColor(x, y);
@@ -339,7 +339,7 @@ void shadeVertically(int verticalDir, Color newColor)
     x0 = x + 1;
     x = x_d;
     iter = getPixelColor(x, y);
-    while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b)
+    while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b && x<599)//hs x<599 to avoid going to palette
     {
         x++;
         iter = getPixelColor(x, y);
@@ -366,7 +366,7 @@ void shadeVertically(int verticalDir, Color newColor)
         x0 = x + 1;
         x = xDEF;
         iter = getPixelColor(x, y);
-        while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b)
+        while (iter.r == oldColor.r && iter.g == oldColor.g && iter.b == oldColor.b && x < 599)//599 for border
         {
             x++;
             iter = getPixelColor(x, y);
@@ -450,16 +450,16 @@ void myDisplay(void)
 
     int colorPalette = 20;
     double clr = 0;//decides the colorpalette by helping get 3 bit binnary numbers
-    while (colorPalette <= 420&&clr<=3) {
+    while (colorPalette <= 460) {
         
-        //cout << (clr > 1.5)<<int(clr)%2 << int(clr * 2) % 2 << endl;// produces 000 001 010 .... 110 
-        glColor3f(clr>1.5, int(clr)%2, int(clr*2)%2);
+        //cout << (int(clr) % 3) / 2.0<< (int(clr * 2) % 3) / 2.0<< (int(clr * 4) % 3) / 2.0<< endl;  // produces 0 0 0   0 0 0.5 .. 0 0.5 1 .. 1 1 1
+        glColor3f((int(clr) % 3) / 2.0, (int(clr*2)%3)/2.0, (int(clr * 4) % 3) / 2.0);//changed from previous commit
         glPointSize(40.0);
         glBegin(GL_POINTS);
         glVertex2i(620, 480-colorPalette);
         glEnd();
         colorPalette += 40;
-        clr += 0.5;
+        clr += 0.25;
     }
     //-------------------------------------------------------------------
     
@@ -499,25 +499,19 @@ void myDisplay(void)
 
 void mouse_dynamic(int mousex, int mousey)
 {
-    
-    
+       
     //get imput for drawing
-    if (coloring == 0) {
+    if (coloring == 0 && mousex<599) { //avoid drawing in color palatte area (<599 cause the newColor indicator (border) is black and shoun't touch the drawing)
         start_x = mousex;
         start_y = 480 - mousey;
     }
 
-    /*if (coloring == 0) {
-        prev_x = start_x;
-        prev_y = start_y;
-        coloring = 1;
-    }*/
     glutPostRedisplay();
 }
 
 void mouse(int button, int state, int mousex, int mousey)
 {
-    if (mousex > 600)
+    if (mousex > 600 && (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN))
         coloring = 1;//hs if you touch the color palette , stop drawing start coloring
 
     if (coloring ==0 &&(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN))
@@ -532,17 +526,35 @@ void mouse(int button, int state, int mousex, int mousey)
     {
         start_x = mousex;
         start_y = 480 - mousey;
-
-        //cout<< newColor.r << newColor.g << newColor.b << " ";
-        //cout << oldColor.r << oldColor.g << oldColor.b << " "<<endl;
+        
+        if (start_x == 600)return; //border situation : to avoid color change by clicking on border
 
         Color currColor = getPixelColor(start_x, start_y);//color at the current click point
 
-        if (start_x > 600 /*&&start_y>240*/) {
+        if (start_x > 600 ) {
             if ((currColor.r == oldColor.r && currColor.g == oldColor.g && currColor.b == oldColor.b)) {
                 oldColor = newColor;
             }
             newColor = currColor;
+
+            //***color indicator***
+
+            //white line to override last color indicator,without this the previos one stays there
+            glColor3d(1, 1, 1);
+            glBegin(GL_LINES);
+            glVertex2i(600, 0);
+            glVertex2i(600, 480);
+            glEnd();
+
+            //actual color indicator
+            int border = start_y - start_y % 40;//to indicate cuurent color
+            glColor3d(0,0,0);
+            glBegin(GL_LINES);
+            glVertex2i(600,border);
+            glVertex2i(600,border+40);
+            glEnd();
+            //------------------
+
             //cout << " +" <<newColor.r<<newColor.g<<newColor.b<<endl;
             return;
         }
