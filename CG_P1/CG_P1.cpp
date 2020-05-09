@@ -54,11 +54,12 @@ Color getPixelColor(GLint x, GLint y)
     return color;
 }
 
-void setPixelColor(GLint x, GLint y, Color color)
+void setPixelColor(GLint x0,GLint x1, GLint y, Color color)
 {
     glColor3f(color.r, color.g, color.b);
-    glBegin(GL_POINTS);
-    glVertex2i(x, y);
+    glBegin(GL_LINES);
+    glVertex2i(x0, y);
+    glVertex2i(x1, y);
     glEnd();
     glFlush();
 }
@@ -186,10 +187,11 @@ int alreadyInAgenda(int x0, int x1, int y)
 
 void shadeHorizontally(int x0, int x1, int y, Color newColor)
 {
-    for (int x = x0; x <= x1; x++)
+    if(x1>599)//palette starts from 600
     {
-        setPixelColor(x, y, newColor);
+        x1 = 599;
     }
+    setPixelColor(x0, x1+1, y, newColor);
 }
 
 int lookForTurns(int x0, int x1, int y, int update)
